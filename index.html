@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 移动端视口适配关键设置 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>「夏日大作战」戏曲人物大PK</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background: #f7f3e6;
+    color:#2c2216;
+    font-family:"思源宋体",SimSun,serif;
+    padding:18px 16px;
+    position:relative;
+    min-height:100vh;
+}
+
+.wrap{
+    max-width:480px;
+    margin:0 auto;
+    text-align:center;
+    position:relative;
+    z-index:2;
+}
+.header-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:12px;
+}
+.logo-box{
+    width:42px;
+    height:42px;
+    flex-shrink:0;
+    background:#eee;
+    border-radius:6px;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+}
+h1{
+    font-size:clamp(22px,5vw,34px);
+    color:#842020;
+    margin:0;
+}
+.desc{
+    font-size:clamp(14px,3.2vw,16px);
+    color:#554433;
+    margin-bottom:6px;
+}
+.desc-second{
+    font-size:clamp(13px,3vw,15px);
+    color:#666;
+    margin-bottom:18px;
+}
+/* 晋级进度条 */
+.progress-bar{
+    display:flex;
+    justify-content:space-between;
+    max-width:420px;
+    margin:0 auto 24px;
+    gap:3px;
+}
+.progress-step{
+    flex:1;
+    font-size:clamp(11px,2.6vw,13px);
+    padding:6px 2px;
+    border-radius:6px;
+    background:#e8e1d0;
+    color:#88765e;
+}
+.progress-step.active{
+    background:#842020;
+    color:#fff;
+}
+.progress-step.done{
+    background:#c9a87c;
+    color:#fff;
+}
+/* PK主体 上下布局 */
+.pk-box{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    margin:24px 0;
+}
+.role-card{
+    width:100%;
+    max-width:320px;
+    height:clamp(340px,75vw,380px);
+    background:#fff;
+    border:2px solid #d4c2a4;
+    border-radius:10px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:0.25s;
+    display:flex;
+    flex-direction:column;
+}
+.role-card:hover{
+    transform:scale(1.02);
+    box-shadow:0 6px 14px #00000018;
+    border-color:#a62828;
+}
+.role-pic{
+    height:clamp(130px,28vw,150px);
+    background:#e9e2d3;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#777;
+}
+.role-info{
+    padding:12px 14px;
+    text-align:left;
+    flex:1;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+}
+.role-info h3{
+    font-size:clamp(16px,3.4vw,20px);
+    color:#701818;
+    margin-bottom:6px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.role-info p{
+    font-size:14px;
+    line-height:1.6;
+    color:#44382a;
+    white-space:pre-line;
+}
+.vs-text{
+    font-size:clamp(26px,6vw,32px);
+    font-weight:bold;
+    color:#912222;
+    margin:4px 0;
+}
+.btn{
+    padding:8px 20px;
+    background:#842020;
+    color:#fff;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    font-size:clamp(14px,3vw,15px);
+    margin:6px;
+}
+.tip-text{
+    color:#a62828;
+    font-weight:bold;
+    font-size:clamp(16px,3.6vw,18px);
+    height:24px;
+    margin-bottom:10px;
+}
+
+/* 居中弹窗样式 */
+.modal-mask{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:15px;
+}
+.modal-box{
+    background:#fff;
+    padding:26px 24px;
+    border-radius:12px;
+    text-align:center;
+    width:100%;
+    max-width:340px;
+}
+.modal-box p{
+    font-size:clamp(16px,3.4vw,18px);
+    margin-bottom:20px;
+    color:#2c2216;
+}
+.modal-box button{
+    padding:8px 22px;
+    border:none;
+    background:#842020;
+    color:#fff;
+    border-radius:4px;
+    cursor:pointer;
+    font-size:15px;
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="header-row">
+        <h1>「夏日大作战」戏曲人物大PK</h1>
+        <!-- Logo位置 1:1正方形 -->
+        <div class="logo-box" id="logo"></div>
+    </div>
+
+    <p class="desc">点击选择您认为二者中“略胜一筹”的人物。本游戏仅供娱乐消遣。</p>
+    <p class="desc-second">涉及人物随机抽选自中华剧院8-9月戏曲演出，期待与您剧场见！</p>
+
+    <div class="tip-text" id="roundTip">当前轮次：16强淘汰赛</div>
+
+    <!-- PK对战区 上下结构 -->
+    <div class="pk-box">
+        <div class="role-card" onclick="voteLeft()">
+            <div class="role-pic" id="picL">【角色剧照占位】</div>
+            <div class="role-info">
+                <h3 id="nameL">薛湘灵（马君、殷婵娟饰）</h3>
+                <p id="infoL">京剧《锁麟囊》
+身份：富家小姐
+技能：善良
+同情心拉满的登州善良女子，后意外与儿子因洪水失散，最终善有善报与家人团聚。</p>
+            </div>
+        </div>
+
+        <div class="vs-text">VS</div>
+
+        <div class="role-card" onclick="voteRight()">
+            <div class="role-pic" id="picR">【角色剧照占位】</div>
+            <div class="role-info">
+                <h3 id="nameR">程婴（杨腾饰）</h3>
+                <p id="infoR">京剧《赵氏孤儿》
+身份：忠臣
+技能：隐忍
+定下换孤之计，以亲子换取忠臣之后赵氏遗孤性命，隐忍半生最终报仇雪恨。</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn" onclick="resetGame()">重新PK</button>
+</div>
+
+<script>
+// ==========【在这里修改所有角色！img数组存放图片】==========
+const roles = [
+    {
+        name:"薛湘灵（马君、殷婵娟饰）",
+        imgs:[
+            "https://s41.ax1x.com/2026/07/28/pmW8Xh6.jpg",
+            "https://s41.ax1x.com/2026/07/28/pmW8x1O.jpg"
+        ],
+        info:"京剧《锁麟囊》\n身份：富家小姐\n技能：善良\n同情心拉满的登州善良女子，后意外与儿子因洪水失散，最终善有善报与家人团聚。"
+    },
+    {
+        name:"程婴（杨腾饰）",
+        imgs:[],
+        info:"京剧《赵氏孤儿》\n身份：忠臣\n技能：隐忍\n定下换孤之计，以亲子换取忠臣之后赵氏遗孤性命，隐忍半生最终报仇雪恨。"
+    },
+    {
+        name:"苏三（周洛伊饰）",
+        imgs:[],
+        info:"京剧《女起解》\n身份：青楼女子\n技能：能说会道\n苏三被诬告谋杀亲夫，押解至太原复审途中将自己的不幸遭遇告知长解崇公道，获得同情，拜其作义女，得崇公道建议将状纸藏于刑枷之内，以备伸冤。"
+    },
+    {
+        name:"许世英（刘欢饰）",
+        imgs:[],
+        info:"京剧《通天犀》\n身份：江湖绿林豪杰，绰号青面虎。\n技能：不计前嫌\n青面虎许世英遭十一郎误伤，得知其原来是被陷害将处决后，义愤填膺改扮下山，劫法场搭救十一郎。"
+    },
+    {
+        name:"李桂枝（徐思佳饰）",
+        imgs:[],
+        info:"昆剧《奇双会》\n身份：马贩李奇之女，褒城县令夫人。\n技能：心思细腻\n李桂枝深夜发现有人在囚牢啼哭，询问时发现竟是父亲李奇，决定上诉伸冤，在丈夫赵宠的帮助下告状至新按院，发现此人是自己的弟弟，后洗清冤屈，一家团聚。"
+    },
+    {
+        name:"赵宠（周鑫饰）",
+        imgs:[],
+        info:"昆剧《奇双会》\n身份：褒城县令，李桂枝丈夫。\n技能：纯爱\n无权但有文书能力的丈夫赵宠得知李桂枝一家的冤案，为其代写辩状，并教导她去新按院告状。妻李桂枝却被按院拉至后堂，赵宠大惊失色，后来发现是自己想多了。"
+    },
+    {
+        name:"谢安（周鑫饰）",
+        imgs:[],
+        info:"昆剧《世说新语》\n身份：东晋宰相，名士重臣。\n技能：喜怒不形于色\n谢安临危不乱，统筹调度，运筹淝水之战；深谙处世之道，周旋朝堂，保全家族与社稷。"
+    },
+    {
+        name:"陈世美（卢松饰）",
+        imgs:["https://s41.ax1x.com/2026/07/28/pmWUx3t.jpg"],
+        info:"京剧《秦香莲》\n身份：新科状元，当朝驸马。 \n技能：薄情寡义\n陈世美得中状元招为驸马，隐瞒有妻儿的事实，面对远道而来携子女京城寻夫的秦香莲反而起了杀心，最终被包拯以龙头铡正法。"
+    },
+    {
+        name:"秦香莲（赵秀君饰）",
+        imgs:["https://s41.ax1x.com/2026/07/28/pmWUX4A.jpg"],
+        info:"京剧《秦香莲》\n身份：陈世美原配妻子\n技能：吃苦耐劳，坚韧不拔。\n秦香莲独自奉养公婆、抚育儿女，千里跋涉进京寻亲，直面权贵鸣冤，被胁迫后仍坚持寻求公道与正义。 "
+    },
+    {
+        name:"包拯（任思媛饰）",
+        imgs:["https://s41.ax1x.com/2026/07/28/pmWUv9I.jpg"],
+        info:"京剧《秦香莲》\n身份：开封府尹\n技能：铁面无私，不畏权贵。\n包拯明察秋毫，掌握驸马陈世美罪证仍能顶住压力，坚守律法，秉公断案。"
+    },
+    {
+        name:"包拯（任思媛、王越饰）",
+        imgs:[],
+        info:"京剧《包龙图》\n身份：开封府尹\n技能：大义灭亲，不畏权贵。\n亲侄包勉获罪，他仍旧依法处刑；巡访时遇李皇后，不惧宫廷旧案盘根错节，坚持追查陈年秘事，力求真相大白并查实仁宗弃母失德的过错，以鞭打龙袍替代责罚，昭示法理的公平。"
+    },
+    {
+        name:"王延龄（张克饰）",
+        imgs:["https://s41.ax1x.com/2026/07/28/pmWUONd.jpg"],
+        info:"京剧《秦香莲》\n身份：当朝丞相\n技能：体恤弱者\n得知秦香莲的遭遇十分同情，主动出面劝说陈世美回心转意，后支持包拯依法断案，为民妇伸张公道。"
+    },
+    {
+        name:"刘玉莲（周娜饰）",
+        imgs:[],
+        info:"京剧《柜中缘》\n身份：民间少女\n技能：古道热肠\n刘玉莲在家中意外偶遇逃亡中的岳飞之弟岳雷，情急之下冒险将人藏于柜中出手相救。"
+    },
+    {
+        name:"刘妈妈（庞嫡男饰）",
+        imgs:[],
+        info:"京剧《罢宴》\n身份：寇准乳母\n技能：善于劝谏\n寇准“忘本”，成为宰相后做寿大肆铺张，乳母刘妈妈听闻此事追忆寇母独自带大寇准的艰辛，言辞恳切，寇准悔之，罢宴停觞。"
+    },
+    {
+        name:"高宠（安海洋、李艾春饰）",
+        imgs:[],
+        info:"京剧《挑滑车》\n身份：南宋岳家军猛将 \n技能：骁勇善战\n南宋初年，岳飞与金兀术在牛头山会战。 部下高宠乘胜追击，单骑闯入金兵大营，金兀术调来铁滑车阻击，高宠连挑数辆之后，力竭战死。"
+    },
+    {
+        name:"俞素秋（张悦饰）",
+        imgs:[],
+        info:"京剧《勘玉钏》\n身份：俞家小姐\n技能：单纯深情\n俞素秋自幼许配书生张少莲，书生清贫，俞素秋命丫环鸾英送与张少莲一只玉钏，嘱其变卖，以做迎娶之资，鸾英将玉钏误送张少莲之友韩臣，韩臣从中作梗与俞素秋成亲，最终俞素秋知被骗失节，羞愤自刎。"
+    },
+    {
+        name:"韩玉姐（张悦饰）",
+        imgs:[],
+        info:"京剧《勘玉钏》\n身份：韩臣之妹\n技能：明辨是非\n韩玉姐意外牵扯进哥哥韩臣与张少莲、俞素秋的案件中，据实道出实情，真相大白。"
+    },
+    {
+        name:"李克用（张克饰）",
+        imgs:[],
+        info:"京剧《珠帘寨》\n身份：沙陀首领\n技能：惧内\n黄巢之战中，李克用起初与唐僖宗心存芥蒂不愿出兵勤王，程敬思与李嗣源根据其惧内的特点，请求刘银屏曹玉娥两位夫人挂帅，迫使李克用出征。"
+    },
+    {
+        name:"程敬思（卢松饰）",
+        imgs:[],
+        info:"京剧《珠帘寨》\n身份：唐朝钦差大臣\n技能：沉稳睿智\n程敬思奉旨前往沙陀搬请李克用出兵，在众人之间周旋劝解，促成发兵勤王。 "
+    },
+    {
+        name:"刘银屏（奇彤饰）",
+        imgs:[],
+        info:"京剧《珠帘寨》\n身份：李克用夫人（二皇娘） \n技能：胆识过人\n听闻事情原委，力主发兵勤王，直言规劝李克用。因太了解李克用，在李嗣源战不过周德威之时，激李克用出战并胜利。"
+    },
+    {
+        name:"李嗣源（何梓硕饰）",
+        imgs:[],
+        info:"京剧《珠帘寨》\n身份：李克用义子，大太保 \n技能：稳重忠心\n身为李克用的义子和大太保，辅佐父王，打理军务。"
+    },
+    {
+        name:"薛平贵（陈圣杰、张桐、张克饰）",
+        imgs:[],
+        info:"京剧《红鬃烈马》\n身份：乞丐、西凉驸马、西凉国王。\n技能：隐忍\n薛平贵降服红鬃烈马，后屡立战功，在西凉国坐拥富贵江山，得势后即刻归来寻妻、兑现旧诺。"
+    },
+    {
+        name:"代战公主（闫巍饰）",
+        imgs:[],
+        info:"京剧《红鬃烈马》\n身份：西凉公主\n技能：英姿飒爽\n倾心薛平贵，之后领兵助其在西凉立足登基。对爱人倾力扶持，对家国尽心守护，是极具气场的巾帼强者。"
+    },
+    {
+        name:"王宝钏（赵秀君饰）",
+        imgs:[],
+        info:"京剧《红鬃烈马》\n身份：丞相之女\n技能：擅挖野菜\n薛平贵原配妻子，面对十八年的分离隐忍克制，自力更生。"
+    },
+    {
+        name:"天女（彭芳宇饰）",
+        imgs:[],
+        info:"京剧《天女散花》\n身份：神女\n技能：超然世外\n天女奉佛旨散花，点化众生，意境悠远。 "
+    },
+    {
+        name:"包拯（马立饰）",
+        imgs:[],
+        info:"京剧《探阴山》\n身份：开封府尹\n技能：阳断人间、阴查地府。\n包拯接颜母诉冤，发现刘金婵、李保、颜查散案件有疑点，刘、李二人已死，包拯乃下阴曹详察之"
+    },
+    {
+        name:"王大娘（闫巍、刘山山饰）",
+        imgs:[],
+        info:"京剧《锯大缸》\n身份：旱魃\n百草山中旱魃化身为王家庄王大娘，取死人噎食罐炼成黄瓷缸，用以抵御雷劫。黄瓷缸后被雷公击裂，王大娘觅人补缸。当方土地化作补锅锯缸匠人假作锯补，故意打碎其缸。旱魃最终遭天兵收服。"
+    },
+    {
+        name:"邹应龙（杨腾饰）",
+        imgs:[],
+        info:"京剧《打严嵩》\n身份：御史 \n技能：智取\n目睹严嵩专权害忠良、私造冠冕谋逆作乱，邹应龙主动前往严府告密，假意投靠取得新任，后待严嵩欲告状时，以验伤无凭为由诱使其主动求打，最终将严嵩大打特打。"
+    },
+    {
+        name:"严嵩（张金博饰）",
+        imgs:[],
+        info:"京剧《打严嵩》\n身份：权臣奸相\n技能：刚愎自用\n掌控朝堂势力，威势滔天但骄傲自大，被邹应龙虚言蒙蔽，当众受辱挨打。"
+    },
+    {
+        name:"陆炳（张克饰）",
+        imgs:[],
+        info:"京剧《审头刺汤》\n身份：锦衣卫指挥使\n技能：心有灵犀\n陆炳深谙官场规则，但内心尚存良知，处事圆滑谨慎，暗中读懂雪艳心意，暗地帮助雪艳里应外合报仇血恨。"
+    },
+    {
+        name:"雪艳（赵秀君饰）",
+        imgs:[],
+        info:"京剧《审头刺汤》\n身份：莫家侍妾\n技能：刚烈果敢\n假意应允汤勤婚事，寻机刺杀奸人，而身陷罗网，最终只能以玉石俱焚的方式复仇。"
+    },
+    {
+        name:"汤勤（石晓亮饰）",
+        imgs:[],
+        info:"京剧《审头刺汤》\n身份：裱褙匠\n技能：书画鉴别与装裱\n挑拨离间，觊觎雪艳，构陷恩人莫怀古，机关算尽，最终死于雪艳刀下。"
+    }
+];
+// =================================================
+
+    // 填入你的LOGO图片地址
+    const logoUrl = "";
+    if(logoUrl){
+        document.getElementById('logo').style.backgroundImage = `url(${logoUrl})`;
+    }
+
+    const rounds = [
+        {name:"16强淘汰赛",next:8},
+        {name:"8强淘汰赛",next:4},
+        {name:"4强半决赛",next:2},
+        {name:"总决赛",next:1}
+    ];
+
+    let nowRound = 0;
+    let winList = [];
+    let fightPool = [];
+    let a,b;
+
+    // 居中弹窗替代原生alert
+    function showModal(text, callback){
+        const mask = document.createElement('div');
+        mask.className = 'modal-mask';
+        mask.innerHTML = `
+            <div class="modal-box">
+                <p>${text}</p>
+                <button id="modal-btn">确定</button>
+            </div>
+        `;
+        document.body.appendChild(mask);
+        document.getElementById('modal-btn').onclick = function(){
+            mask.remove();
+            if(callback) callback();
+        }
+    }
+
+    // 从图片数组随机选取一张图片
+    function getRandomImg(imgArr){
+        if(!Array.isArray(imgArr) || imgArr.length === 0) return "";
+        const idx = Math.floor(Math.random() * imgArr.length);
+        return imgArr[idx];
+    }
+
+    // 打乱数组
+    function shuffle(arr){
+        let res = [...arr];
+        for(let i=res.length-1;i>0;i--){
+            let j = Math.floor(Math.random()*(i+1));
+            [res[i],res[j]] = [res[j],res[i]];
+        }
+        return res;
+    }
+
+    // 【优化自适应文字】范围扩大，保证全部显示
+    function autoAdjustFont(containerEl, textEl, baseFont=14, minFont=10, step=0.4){
+        textEl.style.fontSize = baseFont + "px";
+        while(textEl.scrollHeight > containerEl.clientHeight && baseFont > minFont){
+            baseFont -= step;
+            textEl.style.fontSize = baseFont + "px";
+        }
+    }
+
+    function initPool(){
+        if(fightPool.length <= 0){
+            if(nowRound===0) fightPool = shuffle(roles);
+            else fightPool = shuffle(winList);
+            winList = [];
+        }
+        a = fightPool.pop();
+        b = fightPool.pop();
+        refreshUI();
+    }
+
+    function refreshUI(){
+        const nameL = document.getElementById("nameL");
+        const infoL = document.getElementById("infoL");
+        const nameR = document.getElementById("nameR");
+        const infoR = document.getElementById("infoR");
+
+        nameL.innerText = a.name;
+        infoL.innerText = a.info;
+        nameR.innerText = b.name;
+        infoR.innerText = b.info;
+
+        // 自动缩放文字
+        autoAdjustFont(infoL.parentElement, infoL);
+        autoAdjustFont(infoR.parentElement, infoR);
+
+        // 左侧角色图片
+        const imgA = getRandomImg(a.imgs);
+        const picL = document.getElementById("picL");
+        if(imgA){
+            picL.style.backgroundImage = `url(${imgA})`;
+            picL.innerText = "";
+        }else{
+            picL.innerText = "【角色剧照占位】";
+            picL.style.backgroundImage = "";
+        }
+
+        // 右侧角色图片
+        const imgB = getRandomImg(b.imgs);
+        const picR = document.getElementById("picR");
+        if(imgB){
+            picR.style.backgroundImage = `url(${imgB})`;
+            picR.innerText = "";
+        }else{
+            picR.innerText = "【角色剧照占位】";
+            picR.style.backgroundImage = "";
+        }
+
+        document.getElementById("roundTip").innerText = "当前轮次："+rounds[nowRound].name;
+        updateProgress();
+    }
+
+    function updateProgress(){
+        for(let i=1;i<=6;i++){
+            document.getElementById("s"+i).classList.remove("active","done");
+        }
+        let map = [0,1,2,3,4];
+        for(let i=0;i<nowRound;i++){
+            document.getElementById("s"+(map[i]+1)).classList.add("done");
+        }
+        document.getElementById("s"+(map[nowRound]+1)).classList.add("active");
+    }
+
+    function voteLeft(){
+        winList.push(a);
+        nextFight();
+    }
+    function voteRight(){
+        winList.push(b);
+        nextFight();
+    }
+
+    function nextFight(){
+        if(fightPool.length > 0){
+            initPool();
+        }else{
+            nowRound++;
+            if(nowRound >= rounds.length){
+                showModal("🏆 恭喜！"+winList[0].name+"与您一见如故！", initPool);
+            }else{
+                showModal("✅ "+rounds[nowRound-1].name+"结束！即将进入"+rounds[nowRound].name, initPool);
+            }
+        }
+    }
+
+    function resetGame(){
+        nowRound = 0;
+        winList = [];
+        fightPool = [];
+        initPool();
+    }
+
+    initPool();
+</script>
+</body>
+</html>
