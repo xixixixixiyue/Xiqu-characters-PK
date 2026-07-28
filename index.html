@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<!-- 移动端视口适配关键设置 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>「夏日大作战」戏曲人物大PK</title>
 <style>
@@ -43,30 +42,6 @@ h1{
     color:#666;
     margin-bottom:18px;
 }
-/* 晋级进度条 */
-.progress-bar{
-    display:flex;
-    justify-content:space-between;
-    max-width:420px;
-    margin:0 auto 24px;
-    gap:3px;
-}
-.progress-step{
-    flex:1;
-    font-size:clamp(11px,2.6vw,13px);
-    padding:6px 2px;
-    border-radius:6px;
-    background:#e8e1d0;
-    color:#88765e;
-}
-.progress-step.active{
-    background:#842020;
-    color:#fff;
-}
-.progress-step.done{
-    background:#c9a87c;
-    color:#fff;
-}
 /* PK主体 上下布局 */
 .pk-box{
     display:flex;
@@ -84,7 +59,7 @@ h1{
     border-radius:10px;
     overflow:hidden;
     cursor:pointer;
-    transition:0.25s;
+    transition:0.2s ease;
     display:flex;
     flex-direction:column;
     box-shadow:0 4px 12px rgba(0, 0, 0, 0.08),
@@ -95,6 +70,11 @@ h1{
     box-shadow:0 8px 20px rgba(0, 0, 0, 0.12),
                 0 4px 10px rgba(0, 0, 0, 0.06);
     border-color:#a62828;
+}
+/* 点击按压反馈 */
+.role-card:active{
+    transform:scale(0.98);
+    box-shadow:0 2px 6px rgba(0,0,0,0.07);
 }
 .role-info{
     padding:14px 16px;
@@ -133,6 +113,10 @@ h1{
     cursor:pointer;
     font-size:clamp(14px,3vw,15px);
     margin:6px;
+    transition:0.2s;
+}
+.btn:active{
+    transform:scale(0.96);
 }
 .tip-text{
     color:#a62828;
@@ -179,6 +163,10 @@ h1{
     border-radius:4px;
     cursor:pointer;
     font-size:15px;
+    transition:0.2s;
+}
+.modal-box button:active{
+    transform:scale(0.96);
 }
 </style>
 </head>
@@ -194,7 +182,6 @@ h1{
 
     <div class="tip-text" id="roundTip">当前轮次：16强淘汰赛</div>
 
-    <!-- PK对战区 上下结构 -->
     <div class="pk-box">
         <div class="role-card" onclick="voteLeft()">
             <div class="role-info">
@@ -391,31 +378,120 @@ const roles = [
         info:"京剧《审头刺汤》\n身份：裱褙匠\n技能：书画鉴别与装裱\n\n挑拨离间，觊觎雪艳，构陷恩人莫怀古，机关算尽，最终死于雪艳刀下。"
     }
 ];
-// =================================================
 
-    // 填入你的LOGO图片地址
-    const logoUrl = "";
-    if(logoUrl){
-        document.getElementById('logo').style.backgroundImage = `url(${logoUrl})`;
+const rounds = [
+    {name:"16强淘汰赛",next:8},
+    {name:"8强淘汰赛",next:4},
+    {name:"4强半决赛",next:2},
+    {name:"总决赛",next:1}
+];
+
+let nowRound = 0;
+let winList = [];
+let fightPool = [];
+let a,b;
+
+// 居中弹窗
+function showModal(text, callback){
+    const mask = document.createElement('div');
+    mask.className = 'modal-mask';
+    mask.innerHTML = `
+        <div class="modal-box">
+            <p>${text}</p>
+            <button id="modal-btn">确定</button>
+        </div>
+    `;
+    document.body.appendChild(mask);
+    document.getElementById('modal-btn').onclick = function(){
+        mask.remove();
+        if(callback) callback();
     }
+}
 
-    const rounds = [
-        {name:"16强淘汰赛",next:8},
-        {name:"8强淘汰赛",next:4},
-        {name:"4强半决赛",next:2},
-        {name:"总决赛",next:1}
-    ];
+// 随机图片
+function getRandomImg(imgArr){
+    if(!Array.isArray(imgArr) || imgArr.length === 0) return "";
+    const idx = Math.floor(Math.random() * imgArr.length);
+    return imgArr[idx];
+}
 
-    let nowRound = 0;
-    let winList = [];
-    let fightPool = [];
-    let a,b;
+// 打乱数组
+function shuffle(arr){
+    let res = [...arr];
+    for(let i=res.length-1;i>0;i--){
+        let j = Math.floor(Math.random()*(i+1));
+        [res[i],res[j]] = [res[j],res[i]];
+    }
+    return res;
+}
 
-    // 居中弹窗替代原生alert
-    function showModal(text, callback){
-        const mask = document.createElement('div');
-        mask.className = 'modal-mask';
-        mask.innerHTML = `
-            <div class="modal-box">
-                <p>${text}</p>
-                <button id="modal-btn">确定</bb
+// 文字自适应缩小
+function autoAdjustFont(containerEl, textEl, baseFont=14, minFont=10, step=0.4){
+    textEl.style.fontSize = baseFont + "px";
+    while(textEl.scrollHeight > containerEl.clientHeight && baseFont > minFont){
+        baseFont -= step;
+        textEl.style.fontSize = baseFont + "px";
+    }
+}
+
+function initPool(){
+    if(fightPool.length <= 0){
+        if(nowRound===0) fightPool = shuffle(roles);
+        else fightPool = shuffle(winList);
+        winList = [];
+    }
+    a = fightPool.pop();
+    b = fightPool.pop();
+    refreshUI();
+}
+
+function refreshUI(){
+    const nameL = document.getElementById("nameL");
+    const infoL = document.getElementById("infoL");
+    const nameR = document.getElementById("nameR");
+    const infoR = document.getElementById("infoR");
+
+    nameL.innerText = a.name;
+    infoL.innerText = a.info;
+    nameR.innerText = b.name;
+    infoR.innerText = b.info;
+
+    autoAdjustFont(infoL.parentElement, infoL);
+    autoAdjustFont(infoR.parentElement, infoR);
+
+    document.getElementById("roundTip").innerText = "当前轮次："+rounds[nowRound].name;
+}
+
+function voteLeft(){
+    winList.push(a);
+    nextFight();
+}
+function voteRight(){
+    winList.push(b);
+    nextFight();
+}
+
+function nextFight(){
+    if(fightPool.length > 0){
+        initPool();
+    }else{
+        nowRound++;
+        if(nowRound >= rounds.length){
+            showModal("🏆 恭喜！"+winList[0].name+"与您一见如故！", initPool);
+        }else{
+            showModal("✅ "+rounds[nowRound-1].name+"结束！即将进入"+rounds[nowRound].name, initPool);
+        }
+    }
+}
+
+function resetGame(){
+    nowRound = 0;
+    winList = [];
+    fightPool = [];
+    initPool();
+}
+
+initPool();
+</script>
+</body>
+</html>
